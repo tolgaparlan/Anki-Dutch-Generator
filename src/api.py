@@ -19,11 +19,16 @@ class APIAccess():
 
         for wordObj in self.wordObjs:
             i = 0
-            for dictInfo in self.__getDictInfos(wordObj):
-                output.append(dictInfo)
-                i += 1
+            try:
+                for dictInfo in self.__getDictInfos(wordObj):
+                    output.append(dictInfo)
+                    i += 1
 
-            print(wordObj['Word'] + " completed. Items: " + str(i))
+                print(wordObj['Word'] + " completed. Items: " + str(i))
+
+            except Exception:
+                print("Failed at " + wordObj["Word"])
+
             if i == 0:
                 failed.append(wordObj["Word"])
 
