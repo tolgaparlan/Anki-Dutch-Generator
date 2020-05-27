@@ -1,3 +1,5 @@
 misc/
 test.*
 __pycache__
+*.pyc
+.~lock.test.csv#
