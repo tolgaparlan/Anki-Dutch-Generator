@@ -17,4 +17,4 @@ class InputReader:
     def __getTxtInput(self):
         with open(self.filename, 'r') as f:
             for line in f:
-                yield line.split()
+                yield line.strip()
