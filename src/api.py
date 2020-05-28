@@ -6,49 +6,31 @@ class APIAccess():
     """Handles the access to the lexicala api"""
     BASE_URL = "https://dictapi.lexicala.com/"
 
-    def __init__(self, wordObjs):
-        self.wordObjs = wordObjs
+    # TODO: implement different languages
+    def __init__(self, input_lang, output_lang):
         self.session = Session()
         self.session.auth = (
             environ['LEXICALA_USER'], environ['LEXICALA_PASS'])
 
-    # Returns a list with information from online about each word
-    def getBatchDictInfo(self):
-        output = []
-        failed = []
-
-        for wordObj in self.wordObjs:
-            i = 0
-            try:
-                for dictInfo in self.__getDictInfos(wordObj):
-                    output.append(dictInfo)
-                    i += 1
-
-                print(wordObj['Word'] + " completed. Items: " + str(i))
-
-            except Exception:
-                print("Failed at " + wordObj["Word"])
-
-            if i == 0:
-                failed.append(wordObj["Word"])
-
-        print("Failed: " + str(failed))
-        return output
-
     # Gets online info for a word
-    def __getDictInfos(self, wordObj):
+    def getDictInfo(self, word):
         # Get different meanings for the word
         # and go over every single dictionary entry
         senseObjects = []
-        for result in self.__getSearchData(wordObj['Word'])['results']:
-            entryData = self.__getEntryData(result['id'])
+        for meaning in self.__getSearchData(word)['results']:
+            entryData = self.__getEntryData(meaning['id'])
 
-            gender = self.__parseGender(entryData["headword"])
+            # list with all the different senses of this word
+            senses = entryData['senses']
+            # headword = information about the word
+            headword = entryData['headword']
 
-            senseObjects = self.__parseSenseObjects(entryData['senses'])
+            gender = self.__parseGender(headword)
+
+            senseObjects = self.__parseSenseObjects(senses)
             for el in senseObjects:
                 el['Gender'] = gender
-                el['Word'] = wordObj['Word'].title()
+                el['Word'] = headword['text'].title()
 
         return senseObjects
 

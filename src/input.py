@@ -5,13 +5,16 @@ class InputReader:
         self.filename = filename
         self.mode = mode
 
-    # Returns the input in a list, each element: {'Word':word}
-    def getInput(self):
+    # Returns one word as {'Word':word}
+    # The sub functions must be generators!!
+    def getLine(self):
         if self.mode == 'txt':
             return self.__getTxtInput()
         else:
             raise Exception("Unrecognized Mode")
 
+    # Reading a line each time from a txt file
     def __getTxtInput(self):
         with open(self.filename, 'r') as f:
-            return [{'Word': line.strip()} for line in f.readlines()]
+            for line in f:
+                yield line.split()
