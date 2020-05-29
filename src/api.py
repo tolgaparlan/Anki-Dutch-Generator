@@ -22,8 +22,11 @@ class APIAccess():
 
             # list with all the different senses of this word
             senses = entryData['senses']
-            # headword = information about the word
+            # headword is the dict with information about the word
             headword = entryData['headword']
+            # sometimes it's an array. just take the first one
+            if type(headword) is list:
+                headword = headword[0]
 
             gender = self.__parseGender(headword)
 
@@ -32,7 +35,7 @@ class APIAccess():
                 el['Gender'] = gender
                 el['Word'] = headword['text'].title()
 
-                # Add 'to' the beginning of the vert translations
+                # Add 'to' the beginning of the verb translations
                 if headword['pos'] == 'verb' and not el['Translation'].startswith('to '):
                     el['Translation'] = "to " + el['Translation']
 
