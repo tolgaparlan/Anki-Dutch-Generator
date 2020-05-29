@@ -32,6 +32,10 @@ class APIAccess():
                 el['Gender'] = gender
                 el['Word'] = headword['text'].title()
 
+                # Add 'to' the beginning of the vert translations
+                if headword['pos'] == 'verb' and not el['Translation'].startswith('to '):
+                    el['Translation'] = "to " + el['Translation']
+
         return senseObjects
 
     def __getSearchData(self, word):
@@ -85,7 +89,7 @@ class APIAccess():
         senseObjects = []
         # Go over every sense and parse them
         for sense in senses:
-            # some sense don't have translations
+            # some senses don't have translations
             if "translations" not in sense:
                 continue
 
