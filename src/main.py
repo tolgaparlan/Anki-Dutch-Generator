@@ -13,8 +13,6 @@ def main():
     # Parse the arguments
     parser = argparse.ArgumentParser()
 
-    parser.add_argument('-q', '--quiet', help='Runs the code in silent mode',
-                        default=False, action='store_true')
     parser.add_argument('-c', '--config', type=str, metavar='config_file',
                         help='The path for the config file',
                         default='config.ini')
@@ -25,12 +23,15 @@ def main():
     config.read(args.config)
 
     # Initialize the classes
-    api = APIAccess(config['LANGUAGE']['L2'], config['LANGUAGE']['L1'],
-                    config.getboolean('PREFERENCES', 'PreferLongSentences'),
-                    config.getboolean('PREFERENCES', 'cloze'))
-    input_reader = InputReader('txt', config['PATHS']['InputFile'])
-    output_writer = OutputWriter('csv', config['PATHS']['OutputFile'])
-    audio = Audio(config['LANGUAGE']['L2'], config['PATHS']['AudioFolder'])
+    api = APIAccess(config['LANGUAGE']['L2'],
+                    config['LANGUAGE']['L1'],
+                    config.getboolean('EXAMPLE_SENTENCES', 'PreferLongSentences'),
+                    config.getboolean('EXAMPLE_SENTENCES', 'Cloze'))
+    input_reader = InputReader(config['INPUT']['Mode'],
+                               config['INPUT']['FileName'])
+    output_writer = OutputWriter(config['OUTPUT'])
+    audio = Audio(config['LANGUAGE']['L2'],
+                  config['AUDIO']['Folder'])
 
     # Read the input file and get all the distinct meanings for each
     # word, then append them to the output file
@@ -49,11 +50,9 @@ def main():
         if not len(results):
             failed.append(word)
 
-        if not args.quiet:
-            print(f'{word} finished with {len(results)} results')
+        print(f'{word} finished with {len(results)} results')
 
-    if not args.quiet:
-        print(f'Failed: {failed}')
+    print(f'Failed: {failed}')
 
 
 if __name__ == "__main__":

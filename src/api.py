@@ -93,8 +93,6 @@ class APIAccess:
         try:
             example_sentence = self.__pick_example(sense["examples"])
         except Exception:
-            print("Couldn't fetch examples")
-            print(sense)
             example_sentence = ""
 
         return {
