@@ -117,17 +117,19 @@ class APIAccess:
             return sentence
 
         # gathers all the inflections of the word
-        all_versions = [headword['text']] + [el['text'].replace('|', '') for el
-                                             in headword['inflections']]
+        all_versions = [headword['text']]
+
+        if 'inflections' in headword:
+            all_versions += [el['text'].replace('|', '') for el in
+                             headword['inflections']]
 
         sentence_split = sentence.split(' ')
         for idx, word in enumerate(sentence_split):
-            if word.strip(',.!?:()\'') in all_versions:
+            if word.strip(',.!?:()\'').lower() in all_versions:
                 word = '{{c1:' + word + '}}'
 
             sentence_split[idx] = word
 
-        print(sentence_split)
         return ' '.join(sentence_split)
 
     def __pick_example(self, examples: list) -> str:

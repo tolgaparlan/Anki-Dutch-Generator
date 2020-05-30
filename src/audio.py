@@ -20,7 +20,11 @@ class Audio:
         or empty string if the audio failed
         :param word: The word for which the audio will be fetched
         """
-        link = self.__get_audio_link(word)
+        try:
+            link = self.__get_audio_link(word)
+        except Exception:
+            return ''
+
         r = requests.get(link)
 
         if not r.ok:
