@@ -33,15 +33,15 @@ def main():
     # Read the input file and get all the distinct meanings for each
     # word, then append them to the output file
     failed = []
-    for word in input_reader.getLine():
-        results = api.getDictInfo(word)
+    for word in input_reader.get_next_word():
+        results = api.get_dict_info(word)
 
         # Try to find the audio file for the word and update the results
-        audio_file = audio.getAudio(word)
+        audio_file = audio.get_audio(word)
         for result in results:
             result['Pronounciation'] = audio_file
 
-        output_writer.writeOutput(results)
+        output_writer.write_output(results)
 
         # Book keeping and printing
         if not len(results):

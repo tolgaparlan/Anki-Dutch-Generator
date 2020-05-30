@@ -1,37 +1,44 @@
-from requests import Session
 from os import environ
 
+import requests
 
-class APIAccess():
+
+# TODO: implement different languages
+class APIAccess:
     """Handles the access to the lexicala api"""
     BASE_URL = "https://dictapi.lexicala.com/"
 
-    # TODO: implement different languages
-    def __init__(self, input_lang, output_lang):
-        self.session = Session()
+    def __init__(self, input_lang: str, output_lang: str):
+        self.session = requests.Session()
+        self.input_lang = input_lang
+        self.output_lang = output_lang
         self.session.auth = (
             environ['LEXICALA_USER'], environ['LEXICALA_PASS'])
 
-    # Gets online info for a word
-    def getDictInfo(self, word):
+    def get_dict_info(self, word: str) -> list:
+        """
+        Gets online info for a word
+        :param word: The word to search
+        :return: A list with object filled with info about each sense of the word
+        """
         # Get different meanings for the word
         # and go over every single dictionary entry
-        senseObjects = []
-        for meaning in self.__getSearchData(word)['results']:
-            entryData = self.__getEntryData(meaning['id'])
+        sense_objects = []
+        for meaning in self.__get_search_data(word)['results']:
+            entry_data = self.__get_entry_data(meaning['id'])
 
             # list with all the different senses of this word
-            senses = entryData['senses']
+            senses = entry_data['senses']
             # headword is the dict with information about the word
-            headword = entryData['headword']
+            headword = entry_data['headword']
             # sometimes it's an array. just take the first one
             if type(headword) is list:
                 headword = headword[0]
 
-            gender = self.__parseGender(headword)
+            gender = self.__parse_gender(headword)
 
-            senseObjects = self.__parseSenseObjects(senses)
-            for el in senseObjects:
+            sense_objects = self.__parse_sense_objects(senses)
+            for el in sense_objects:
                 el['Gender'] = gender
                 el['Word'] = headword['text'].title()
 
@@ -39,30 +46,30 @@ class APIAccess():
                 if headword['pos'] == 'verb' and not el['Translation'].startswith('to '):
                     el['Translation'] = "to " + el['Translation']
 
-        return senseObjects
+        return sense_objects
 
-    def __getSearchData(self, word):
-        PARAMS = {'source': 'global',
-                  'language': 'nl',
-                  'text': word}
-
+    def __get_search_data(self, word) -> requests.Response:
         return self.session.get(url=self.BASE_URL + 'search',
-                                params=PARAMS).json()
+                                params={'source': 'global',
+                                        'language': 'nl',
+                                        'text': word}).json()
 
-    def __getEntryData(self, id):
-        return self.session.get(url=self.BASE_URL + 'entries/' + id).json()
+    def __get_entry_data(self, entry_id):
+        return self.session.get(url=self.BASE_URL + 'entries/' + entry_id).json()
 
-    def __parseGender(self, headwordObj):
+    @staticmethod
+    def __parse_gender(headword_obj):
         # gender is only applicable to nouns, and common to all senses
-        if 'gender' not in headwordObj:
+        if 'gender' not in headword_obj:
             return ''
 
-        if headwordObj['gender'] == 'neuter':
+        if headword_obj['gender'] == 'neuter':
             return 'Het'
         else:
             return 'De'
 
-    def __parseSense(self, sense):
+    @staticmethod
+    def __parse_sense(sense):
         english_translations = sense['translations']['en']
         definition = sense['definition']
 
@@ -79,6 +86,7 @@ class APIAccess():
 
         # If there are any, get the first example sentence
         # TODO: get the longest sentence instead?
+        # TODO: Scrape better here
         try:
             example_sentences = sense["examples"][0]["text"]
         except Exception:
@@ -88,15 +96,15 @@ class APIAccess():
                 'Text': example_sentences,
                 'Definition': definition}
 
-    def __parseSenseObjects(self, senses):
-        senseObjects = []
+    def __parse_sense_objects(self, senses):
+        sense_objects = []
         # Go over every sense and parse them
         for sense in senses:
             # some senses don't have translations
             if "translations" not in sense:
                 continue
 
-            output = self.__parseSense(sense)
-            senseObjects.append(output)
+            output = self.__parse_sense(sense)
+            sense_objects.append(output)
 
-        return senseObjects
+        return sense_objects
