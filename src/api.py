@@ -9,11 +9,12 @@ class APIAccess:
     BASE_URL = "https://dictapi.lexicala.com/"
 
     def __init__(self, input_lang: str, output_lang: str,
-                 prefer_long_examples: bool):
+                 prefer_long_examples: bool, cloze: bool):
         self.session = requests.Session()
         self.input_lang = input_lang
         self.output_lang = output_lang
         self.prefer_long_examples = prefer_long_examples
+        self.cloze = cloze
         self.session.auth = (
             environ['LEXICALA_USER'], environ['LEXICALA_PASS'])
 
@@ -33,13 +34,13 @@ class APIAccess:
             senses = entry_data['senses']
             # headword is the dict with information about the word
             headword = entry_data['headword']
-            # sometimes it's an array. just take the first one
+            # sometimes it'sentence an array. just take the first one
             if type(headword) is list:
                 headword = headword[0]
 
             gender = self.__parse_gender(headword)
 
-            sense_objects = self.__parse_sense_objects(senses)
+            sense_objects = self.__parse_sense_objects(headword, senses)
             for el in sense_objects:
                 el['Gender'] = gender
                 el['Word'] = headword['text'].title()
@@ -72,7 +73,7 @@ class APIAccess:
         else:
             return 'De'
 
-    def __parse_sense(self, sense):
+    def __parse_sense(self, headword: object, sense: object):
         english_translations = sense['translations']['en']
         definition = sense['definition']
 
@@ -97,13 +98,37 @@ class APIAccess:
             example_sentence = ""
 
         return {
-            'Translation': self.__attempt_cloze(english_translations.title()),
-            'Text': example_sentence,
+            'Translation': english_translations.title(),
+            'Text': self.__attempt_cloze(headword, example_sentence),
             'Definition': definition
         }
 
-    def __attempt_cloze(self, s: str) -> str:
-        return s
+    def __attempt_cloze(self, headword: object, sentence: str) -> str:
+        """
+        Attempts to match the word in the sentence and turn the sentence into
+        the cloze format. Will not work in situations where any inflection
+        don't exactly match the used format of the word in the sentence.
+        TODO: Try to improve this. Especially for composite words
+        :param headword: contains information about the dictionary entry
+        :param sentence: the example sentence containing a version of the word
+        """
+
+        if not self.cloze:
+            return sentence
+
+        # gathers all the inflections of the word
+        all_versions = [headword['text']] + [el['text'].replace('|', '') for el
+                                             in headword['inflections']]
+
+        sentence_split = sentence.split(' ')
+        for idx, word in enumerate(sentence_split):
+            if word.strip(',.!?:()\'') in all_versions:
+                word = '{{c1:' + word + '}}'
+
+            sentence_split[idx] = word
+
+        print(sentence_split)
+        return ' '.join(sentence_split)
 
     def __pick_example(self, examples: list) -> str:
         """
@@ -118,14 +143,13 @@ class APIAccess:
             return picked
 
         for example in examples:
-            print(len(example["text"]) > len(picked))
             if (len(example["text"]) > len(
                     picked)) == self.prefer_long_examples:
                 picked = example["text"]
 
         return picked
 
-    def __parse_sense_objects(self, senses):
+    def __parse_sense_objects(self, headword: object, senses: list):
         sense_objects = []
         # Go over every sense and parse them
         for sense in senses:
@@ -133,7 +157,7 @@ class APIAccess:
             if "translations" not in sense:
                 continue
 
-            output = self.__parse_sense(sense)
+            output = self.__parse_sense(headword, sense)
             sense_objects.append(output)
 
         return sense_objects

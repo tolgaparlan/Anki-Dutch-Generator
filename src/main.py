@@ -26,7 +26,8 @@ def main():
 
     # Initialize the classes
     api = APIAccess(config['LANGUAGE']['L2'], config['LANGUAGE']['L1'],
-                    config.getboolean('PREFERENCES', 'PreferLongSentences'))
+                    config.getboolean('PREFERENCES', 'PreferLongSentences'),
+                    config.getboolean('PREFERENCES', 'cloze'))
     input_reader = InputReader('txt', config['PATHS']['InputFile'])
     output_writer = OutputWriter('csv', config['PATHS']['OutputFile'])
     audio = Audio(config['LANGUAGE']['L2'], config['PATHS']['AudioFolder'])
