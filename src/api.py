@@ -8,11 +8,12 @@ class APIAccess:
     """Handles the access to the lexicala api"""
     BASE_URL = "https://dictapi.lexicala.com/"
 
-    def __init__(self, input_lang: str, output_lang: str, username: str, password: str):
+    def __init__(self, input_lang: str, output_lang: str):
         self.session = requests.Session()
         self.input_lang = input_lang
         self.output_lang = output_lang
-        self.session.auth = (username, password)
+        self.session.auth = (
+            environ['LEXICALA_USER'], environ['LEXICALA_PASS'])
 
     def get_dict_info(self, word: str) -> list:
         """
@@ -100,7 +101,6 @@ class APIAccess:
         # Go over every sense and parse them
         for sense in senses:
             # some senses don't have translations
-            # TODO: Look into this
             if "translations" not in sense:
                 continue
 
