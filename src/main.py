@@ -1,12 +1,12 @@
 #!/usr/bin/python3
 
-import sys
 import argparse
 import configparser
-from input import InputReader
+
 from api import APIAccess
-from output import OutputWriter
 from audio import Audio
+from input import InputReader
+from output import OutputWriter
 
 
 def main():
@@ -25,7 +25,8 @@ def main():
     config.read(args.config)
 
     # Initialize the classes
-    api = APIAccess(config['LANGUAGE']['L2'], config['LANGUAGE']['L1'])
+    api = APIAccess(config['LANGUAGE']['L2'], config['LANGUAGE']['L1'],
+                    config.getboolean('PREFERENCES', 'PreferLongSentences'))
     input_reader = InputReader('txt', config['PATHS']['InputFile'])
     output_writer = OutputWriter('csv', config['PATHS']['OutputFile'])
     audio = Audio(config['LANGUAGE']['L2'], config['PATHS']['AudioFolder'])

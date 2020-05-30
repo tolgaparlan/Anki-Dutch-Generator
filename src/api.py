@@ -8,10 +8,12 @@ class APIAccess:
     """Handles the access to the lexicala api"""
     BASE_URL = "https://dictapi.lexicala.com/"
 
-    def __init__(self, input_lang: str, output_lang: str):
+    def __init__(self, input_lang: str, output_lang: str,
+                 prefer_long_examples: bool):
         self.session = requests.Session()
         self.input_lang = input_lang
         self.output_lang = output_lang
+        self.prefer_long_examples = prefer_long_examples
         self.session.auth = (
             environ['LEXICALA_USER'], environ['LEXICALA_PASS'])
 
@@ -43,7 +45,8 @@ class APIAccess:
                 el['Word'] = headword['text'].title()
 
                 # Add 'to' the beginning of the verb translations
-                if headword['pos'] == 'verb' and not el['Translation'].startswith('to '):
+                if headword['pos'] == 'verb' and not el[
+                    'Translation'].startswith('to '):
                     el['Translation'] = "to " + el['Translation']
 
         return sense_objects
@@ -55,7 +58,8 @@ class APIAccess:
                                         'text': word}).json()
 
     def __get_entry_data(self, entry_id):
-        return self.session.get(url=self.BASE_URL + 'entries/' + entry_id).json()
+        return self.session.get(
+            url=self.BASE_URL + 'entries/' + entry_id).json()
 
     @staticmethod
     def __parse_gender(headword_obj):
@@ -68,8 +72,7 @@ class APIAccess:
         else:
             return 'De'
 
-    @staticmethod
-    def __parse_sense(sense):
+    def __parse_sense(self, sense):
         english_translations = sense['translations']['en']
         definition = sense['definition']
 
@@ -85,16 +88,42 @@ class APIAccess:
                 "Translation format unexpected:\n" + str(sense))
 
         # If there are any, get the first example sentence
-        # TODO: get the longest sentence instead?
         # TODO: Scrape better here
         try:
-            example_sentences = sense["examples"][0]["text"]
+            example_sentence = self.__pick_example(sense["examples"])
         except Exception:
-            example_sentences = ""
+            print("Couldn't fetch examples")
+            print(sense)
+            example_sentence = ""
 
-        return {'Translation': english_translations.title(),
-                'Text': example_sentences,
-                'Definition': definition}
+        return {
+            'Translation': self.__attempt_cloze(english_translations.title()),
+            'Text': example_sentence,
+            'Definition': definition
+        }
+
+    def __attempt_cloze(self, s: str) -> str:
+        return s
+
+    def __pick_example(self, examples: list) -> str:
+        """
+        Picks the longest or shortest example from the bunch, depending which
+        one is preferred
+        :param examples: a list of examples for the sense as fetched from API
+        :param prefer_long: Should longer examples be preferred
+        :return: The longest/shortest example sentence
+        """
+        picked = examples[0]["text"]
+        if len(examples) == 0:
+            return picked
+
+        for example in examples:
+            print(len(example["text"]) > len(picked))
+            if (len(example["text"]) > len(
+                    picked)) == self.prefer_long_examples:
+                picked = example["text"]
+
+        return picked
 
     def __parse_sense_objects(self, senses):
         sense_objects = []
