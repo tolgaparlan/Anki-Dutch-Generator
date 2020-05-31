@@ -124,7 +124,7 @@ class APIAccess:
         sentence_split = sentence.split(' ')
         for idx, word in enumerate(sentence_split):
             if word.strip(',.!?:()\'').lower() in all_versions:
-                word = '{{c1:' + word + '}}'
+                word = '{{c1::' + word + '}}'
 
             sentence_split[idx] = word
 
