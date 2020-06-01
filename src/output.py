@@ -12,7 +12,7 @@ class OutputWriter:
         """
         :param config: {Mode, DeckName, ModelName} for ankiconnect, {Mode, Filename} for csv
         """
-        print(config['Mode'])
+
         self.mode = config['Mode']
         if self.mode.endswith('.csv'):
             self.filename = config['Filename']
@@ -47,8 +47,8 @@ class OutputWriter:
                 }
             })
 
-        if not r.ok or r.json()['error']:
-            raise Exception('AnkiConnect Problem:' + str(r.json()))
+            if not r.ok or r.json()['error']:
+                raise Exception('AnkiConnect Problem:' + str(r.json()))
 
     def __output_csv(self, definitions: list):
         """
