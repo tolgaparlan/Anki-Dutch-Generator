@@ -1,16 +1,17 @@
 import os
 import re
+from pydub import AudioSegment
+from pydub import effects
 
 import requests
 from bs4 import BeautifulSoup
 
 
-class Audio:
-    BASE_URL = ''
-
-    def __init__(self, lang, path):
+class AudioManager:
+    def __init__(self, lang: str, path: str, normalize: bool):
         self.BASE_URL = f'https://{lang}.wiktionary.org/wiki/'
-        self.path = '/home/tolga/.local/share/Anki2/User 1/collection.media'
+        self.path = path
+        self.normalize = normalize
 
     def get_audio(self, word: str) -> str:
         """
@@ -30,8 +31,13 @@ class Audio:
         if not r.ok:
             return ''
 
-        with open(os.path.join(self.path, f'{word}.ogg'), 'wb') as f:
+        file_path = os.path.join(self.path, f'{word}.ogg')
+        with open(file_path, 'wb') as f:
             f.write(r.content)
+
+        if self.normalize:
+            effects.normalize(AudioSegment.from_ogg(file_path)).export(file_path)
+
         return f'[sound:{word}.ogg]'
 
     def __get_audio_link(self, word: str) -> str:

@@ -4,7 +4,7 @@ import argparse
 import configparser
 
 from api import APIAccess
-from audio import Audio
+from audiomanager import AudioManager
 from input import InputReader
 from output import OutputWriter
 
@@ -30,8 +30,9 @@ def main():
     input_reader = InputReader(config['INPUT']['Mode'],
                                config['INPUT']['FileName'])
     output_writer = OutputWriter(config['OUTPUT'])
-    audio = Audio(config['LANGUAGE']['L2'],
-                  config['AUDIO']['Folder'])
+    audio = AudioManager(config['LANGUAGE']['L2'],
+                         config['AUDIO']['Folder'],
+                         config.getboolean('AUDIO', 'Normalize'))
 
     # Read the input file and get all the distinct meanings for each
     # word, then append them to the output file
