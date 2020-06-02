@@ -38,14 +38,23 @@ def main():
     # word, then append them to the output file
     failed = []
     for word in input_reader.get_next_word():
-        results = api.get_dict_info(word)
+        try:
+            results = api.get_dict_info(word)
 
-        # Try to find the audio file for the word and update the results
-        audio_file = audio.get_audio(word)
-        for result in results:
-            result['Pronounciation'] = audio_file
+            # Try to find the audio file for the word and update the results
+            audio_file = audio.get_audio(word)
+            for result in results:
+                result['Pronounciation'] = audio_file
 
-        output_writer.write_output(results)
+            output_writer.write_output(results)
+        except PermissionError as e:
+            # Happens if the Lexicala API doesn't allow connection
+            print(e)
+            print('Terminating the Program')
+            exit(0)
+        except Exception as e:
+            # Shouldn't happen normally
+            raise e
 
         # Book keeping and printing
         if not len(results):

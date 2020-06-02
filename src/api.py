@@ -27,9 +27,7 @@ class APIAccess:
         # Get different meanings for the word
         # and go over every single dictionary entry
         sense_objects = []
-        for meaning in self.__get_search_data(word)['results']:
-            entry_data = self.__get_entry_data(meaning['id'])
-
+        for entry_data in self.__get_entry_data(word):
             # list with all the different senses of this word
             senses = entry_data['senses']
             # headword is the dict with information about the word
@@ -46,21 +44,35 @@ class APIAccess:
                 el['Word'] = headword['text'].title()
 
                 # Add 'to' the beginning of the verb translations
-                if headword['pos'] == 'verb' and not el[
-                    'Translation'].startswith('to '):
+                if headword['pos'] == 'verb' and not el['Translation'].startswith('to '):
                     el['Translation'] = "to " + el['Translation']
 
         return sense_objects
 
-    def __get_search_data(self, word) -> requests.Response:
-        return self.session.get(url=self.BASE_URL + 'search',
-                                params={'source': 'global',
-                                        'language': 'nl',
-                                        'text': word}).json()
+    def __get_entry_data(self, word: str) -> list:
+        """
+        Retrieves info about every sense of the word and returns the
+        sense objects in a list.
+        :param word: The L2 word to search for
+        :return: A list of entries (https://dictapi.lexicala.com/swagger-docs/#/data/get_entry)
+        """
+        r = self.session.get(url=self.BASE_URL + 'search',
+                             params={'source': 'global',
+                                     'language': 'nl',
+                                     'text': word})
 
-    def __get_entry_data(self, entry_id):
-        return self.session.get(
-            url=self.BASE_URL + 'entries/' + entry_id).json()
+        if not r.ok:
+            raise PermissionError('Problem with API connection: ' + r.json()['message'])
+
+        entries = []
+        for meaning in r.json()['results']:
+            r2 = self.session.get(url=self.BASE_URL + 'entries/' + meaning['id'])
+
+            if not r2.ok:
+                raise PermissionError('Problem with API connection: ' + r2.json()['message'])
+
+            entries.append(r2.json())
+        return entries
 
     @staticmethod
     def __parse_gender(headword_obj):
@@ -73,7 +85,7 @@ class APIAccess:
         else:
             return 'De'
 
-    def __parse_sense(self, headword: object, sense: object):
+    def __parse_sense(self, headword: dict, sense: dict):
         english_translations = sense['translations']['en']
         definition = sense['definition']
 
@@ -101,7 +113,7 @@ class APIAccess:
             'Definition': definition
         }
 
-    def __attempt_cloze(self, headword: object, sentence: str) -> str:
+    def __attempt_cloze(self, headword: dict, sentence: str) -> str:
         """
         Attempts to match the word in the sentence and turn the sentence into
         the cloze format. Will not work in situations where any inflection
@@ -135,7 +147,6 @@ class APIAccess:
         Picks the longest or shortest example from the bunch, depending which
         one is preferred
         :param examples: a list of examples for the sense as fetched from API
-        :param prefer_long: Should longer examples be preferred
         :return: The longest/shortest example sentence
         """
         picked = examples[0]["text"]
@@ -149,7 +160,7 @@ class APIAccess:
 
         return picked
 
-    def __parse_sense_objects(self, headword: object, senses: list):
+    def __parse_sense_objects(self, headword: dict, senses: list):
         sense_objects = []
         # Go over every sense and parse them
         for sense in senses:
