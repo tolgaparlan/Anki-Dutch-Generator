@@ -87,7 +87,10 @@ class APIAccess:
 
     def __parse_sense(self, headword: dict, sense: dict):
         english_translations = sense['translations']['en']
-        definition = sense['definition']
+
+        definition = ''
+        if 'definition' in sense:
+            definition = sense['definition']
 
         # Get all the english translations for the sense
         # Translations might be an array with dicts or a single dict
