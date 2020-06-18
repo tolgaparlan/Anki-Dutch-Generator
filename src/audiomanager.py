@@ -23,12 +23,12 @@ class AudioManager:
         """
         try:
             link = self.__get_audio_link(word)
+
+            r = requests.get(link)
+
+            if not r.ok:
+                return ''
         except Exception:
-            return ''
-
-        r = requests.get(link)
-
-        if not r.ok:
             return ''
 
         file_path = os.path.join(self.path, f'{word}.ogg')
